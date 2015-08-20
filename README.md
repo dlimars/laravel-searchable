@@ -1,9 +1,9 @@
+# Laravel Searchable
 [![Build Status](https://travis-ci.org/dlimars/laravel-searchable.svg)](https://travis-ci.org/dlimars/laravel-searchable)
 
-# Laravel Searchable
 a simple trait to use with your Laravel Models
 
-## Instalation
+## Installation
 open terminal and run:
 ```composer require dlimars/laravel-searchable```
 
@@ -14,7 +14,6 @@ just add in your models
         use Dlimars\LaravelSearchable\Searchable;
         private $searchable = [
             'name'          => 'LIKE',
-            'created_at'    => 'BETWEEN',
             'id'            => 'MATCH'
         ];
     }
@@ -34,4 +33,10 @@ just call ```search()``` method in model
 you can also use with request
 ```php
     $users = User::search($request()->all())->get();
+```
+
+## Operators
+```php
+    'LIKE'  // produces $query->where('field', 'LIKE', '%{$value}%')
+    'MATCH' // produces $query->where('field', $value)
 ```
