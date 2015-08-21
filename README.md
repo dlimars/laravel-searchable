@@ -1,5 +1,9 @@
 # Laravel Searchable
 [![Build Status](https://travis-ci.org/dlimars/laravel-searchable.svg)](https://travis-ci.org/dlimars/laravel-searchable)
+[![Latest Stable Version](https://poser.pugx.org/dlimars/laravel-searchable/v/stable)](https://packagist.org/packages/dlimars/laravel-searchable)
+[![Total Downloads](https://poser.pugx.org/dlimars/laravel-searchable/downloads)](https://packagist.org/packages/dlimars/laravel-searchable)
+[![Latest Unstable Version](https://poser.pugx.org/dlimars/laravel-searchable/v/unstable)](https://packagist.org/packages/dlimars/laravel-searchable)
+[![License](https://poser.pugx.org/dlimars/laravel-searchable/license)](https://packagist.org/packages/dlimars/laravel-searchable)
 
 a simple trait to use with your Laravel Models
 
