@@ -16,6 +16,14 @@ class TraitSearchableTest extends PHPUnit_Framework_TestCase {
 		$this->stubClass = new StubClass;
 	}
 
+	public function testNotCallOperatorsWhenSearchableIsNotDefined() {
+		$search = ['name' => 'user'];
+		$query = $this->getBuilderMock();
+		$query->expects($this->never(0))
+			  ->method("where");
+		$this->stubClass->scopeSearch($query, $search);
+	}
+
 	public function testCallLikeOperator(){
 		$this->stubClass->searchable = [ 'name' => 'LIKE'];
 		$search = ['name' => 'user'];
@@ -56,6 +64,70 @@ class TraitSearchableTest extends PHPUnit_Framework_TestCase {
 			  ->method("where")
 			  ->with("name", "user");
 
+		$this->stubClass->scopeSearch($query, $search);
+	}
+
+	public function testCallBetweenOperator(){
+		$this->stubClass->searchable = [ 'counter' => 'BETWEEN'];
+		$search = ['counter' => [10, 20]];
+
+		$query = $this->getBuilderMock();
+
+		$query->expects($this->at(0))
+			  ->method("where")
+			  ->with("counter", ">=", 10);
+
+		$query->expects($this->at(1))
+			  ->method("where")
+			  ->with("counter", "<=", 20);
+
+		$this->stubClass->scopeSearch($query, $search);
+	}
+
+	public function testCallGreaterOperator(){
+		$this->stubClass->searchable = [ 'counter' => 'BETWEEN'];
+		$search = ['counter' => [10, null]];
+
+		$query = $this->getBuilderMock();
+
+		$query->expects($this->once())
+			  ->method("where")
+			  ->with("counter", ">=", 10);
+
+		$this->stubClass->scopeSearch($query, $search);
+	}
+
+	public function testCallLessOperator(){
+		$this->stubClass->searchable = [ 'counter' => 'BETWEEN'];
+		$search = ['counter' => [null, 10]];
+
+		$query = $this->getBuilderMock();
+
+		$query->expects($this->once())
+			  ->method("where")
+			  ->with("counter", "<=", 10);
+
+		$this->stubClass->scopeSearch($query, $search);
+	}
+
+	public function testNotCallBetweenOperatorWhenValuesIsEmptyOrNull(){
+		$this->stubClass->searchable = [ 'counter' => 'BETWEEN'];
+
+		$query = $this->getBuilderMock();
+
+		$query->expects($this->never())
+			  ->method("where");
+
+		$search = ['counter' => [null, null]];
+		$this->stubClass->scopeSearch($query, $search);
+
+		$search = ['counter' => ['', '']];
+		$this->stubClass->scopeSearch($query, $search);
+
+		$search = ['counter' => ["abc"]];
+		$this->stubClass->scopeSearch($query, $search);
+
+		$search = ['counter' => "abc"];
 		$this->stubClass->scopeSearch($query, $search);
 	}
 

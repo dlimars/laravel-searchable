@@ -32,6 +32,17 @@ trait Searchable {
 								$queryBuilder->where($field, "LIKE", "%".$value."%");
 							}, explode(" ", $value));
 							break;
+
+						// compare between values
+						case 'BETWEEN':
+							if (is_array($value) && count($value) == 2) {
+								if(isset($value[0]) && !empty($value[0])) {
+									$queryBuilder->where($field, ">=", $value[0]);
+								}
+								if(isset($value[1]) && !empty($value[1])) {
+									$queryBuilder->where($field, "<=", $value[1]);
+								}
+							}
 					}
 				}
 			}

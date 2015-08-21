@@ -18,7 +18,8 @@ just add in your models
         use Dlimars\LaravelSearchable\Searchable;
         private $searchable = [
             'name'          => 'LIKE',
-            'id'            => 'MATCH'
+            'id'            => 'MATCH',
+            'created_at'    => 'BETWEEN'
         ];
     }
 ```
@@ -27,11 +28,27 @@ just add in your models
 just call ```search()``` method in model
 ```php
     $filters = [
-        'name' => 'User test'
+        'name'          => 'foo bar',
+        'id'            => '10',
+        'created_at'    => ['2010-01-01 00:00:00', '2015-01-01 23:59:59']
     ];
+
     $users = User::search($filters)->get();
-    // produces $query->where('name', 'LIKE', '%User%')
-    //                ->where('name', 'LIKE', '%test%')
+    // produces $query->where('name', 'LIKE', '%foo%')
+    //                ->where('name', 'LIKE', '%bar%')
+    //                ->where('id', '10')
+    //                ->where('created_at', '>=', '2010-01-01 00:00:00')
+    //                ->where('created_at', '<=', '2015-01-01 23:59:59')
+
+    $filters = [
+        'created_at'    => ['2010-01-01 00:00:00', null]
+    ];
+    //  produces $query->where('created_at', '>=', '2010-01-01 00:00:00')
+
+    $filters = [
+        'created_at'    => [null, '2015-01-01 23:59:59']
+    ];
+    //  produces $query->where('created_at', '<=', '2015-01-01 23:59:59')
 ```
 
 you can also use with request
@@ -41,6 +58,8 @@ you can also use with request
 
 ## Operators
 ```php
-    'LIKE'  // produces $query->where('field', 'LIKE', '%{$value}%')
-    'MATCH' // produces $query->where('field', $value)
+    'LIKE'      // produces $query->where('field', 'LIKE', '%{$value}%')
+    'MATCH'     // produces $query->where('field', $value)
+    'BETWEEN'   // produces $query->where('field', '>=', $value[0])
+                //                ->where('field', '<=', $value[1])
 ```
