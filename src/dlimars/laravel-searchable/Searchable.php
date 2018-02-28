@@ -5,49 +5,81 @@ use \Illuminate\Database\Eloquent\Builder;
 
 trait Searchable {
 
-	/**
-	 * Apply filters in your QueryBuilder based in $fields
-	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $queryBuilder
-	 * @param array $fields
-	 *
-	 */
+    /**
+     * Apply filters in your QueryBuilder based in $fields
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $queryBuilder
+     * @param array $fields
+     *
+     * @return Builder
+     */
 	public function scopeSearch(Builder $queryBuilder, $fields=[]){
 
 		if (isset($this->searchable)) {
 
 			foreach ($fields as $field => $value) {
 
-				if (array_key_exists($field, $this->searchable)) {
+				if (!empty($value) && array_key_exists($field, $this->searchable)) {
 
 					switch ($this->searchable[$field]) {
 						// compare equals values
 						case 'MATCH':
-							$queryBuilder->where($field, $value);
+							$this->applyEqualsSearch($queryBuilder, $field, $value);
 							break;
 						
 						// compare like values
 						case 'LIKE':
-							array_map(function($value) use ($queryBuilder, $field){
-								$queryBuilder->where($field, "LIKE", "%".$value."%");
-							}, explode(" ", $value));
+							$this->applyLikeSearch($queryBuilder, $field, $value);
 							break;
 
 						// compare between values
 						case 'BETWEEN':
-							if (is_array($value) && count($value) == 2) {
-								if(isset($value[0]) && !empty($value[0])) {
-									$queryBuilder->where($field, ">=", $value[0]);
-								}
-								if(isset($value[1]) && !empty($value[1])) {
-									$queryBuilder->where($field, "<=", $value[1]);
-								}
-							}
+							$this->applyBetweenSearch($queryBuilder, $field, $value);
+                            break;
 					}
 				}
 			}
 		}
 		return $queryBuilder;
 	}
+
+    /**
+     * @param Builder $queryBuilder
+     * @param $field
+     * @param array $value
+     */
+    public function applyBetweenSearch(Builder &$queryBuilder, $field, $value = [])
+    {
+        if (is_array($value) && count($value) == 2) {
+            if(isset($value[0]) && !empty($value[0])) {
+                $queryBuilder->where($field, ">=", $value[0]);
+            }
+            if(isset($value[1]) && !empty($value[1])) {
+                $queryBuilder->where($field, "<=", $value[1]);
+            }
+        }
+    }
+
+    /**
+     * @param Builder $queryBuilder
+     * @param $field
+     * @param $value
+     */
+    public function applyLikeSearch(Builder &$queryBuilder, $field, $value)
+    {
+        array_map(function($value) use ($queryBuilder, $field){
+            $queryBuilder->where($field, "LIKE", "%".$value."%");
+        }, explode(" ", $value));
+    }
+
+    /**
+     * @param Builder $queryBuilder
+     * @param $field
+     * @param $value
+     */
+    public function applyEqualsSearch(Builder &$queryBuilder, $field, $value)
+    {
+        $queryBuilder->where($field, $value);
+    }
 
 }
