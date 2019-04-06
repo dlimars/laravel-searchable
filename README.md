@@ -56,10 +56,51 @@ you can also use with request
     $users = User::search($request()->all())->get();
 ```
 
-## Operators
+## Default Operators
 ```php
     'LIKE'      // produces $query->where('field', 'LIKE', '%{$value}%')
     'MATCH'     // produces $query->where('field', $value)
     'BETWEEN'   // produces $query->where('field', '>=', $value[0])
                 //                ->where('field', '<=', $value[1])
+```
+
+
+## Custom Operators
+You can create a custom scope in your models, and call as operator.
+
+Example of class:
+
+```
+    class Customer extends EloquentModel
+    {
+        use Searchable;
+        
+        public $fillable = [
+            'firstname',
+            'lastname'
+        ];
+        
+        public $searchable = [
+            'id'    => 'MATCH',
+            'name'  => 'myCustomSearchByName'
+        ]
+        
+        public function scopeMyCustomSearchByName($queryBuilder, $name)
+        {
+            $name = str_slug($name, "%");
+    
+            $queryBuilder->where(
+                \DB::raw('CONCAT(firstname, " ", lastname'),
+                'LIKE',
+                "%{$name}%"
+            );
+        }
+    }
+```
+
+and call
+
+```
+    $filters   = ['name' => 'Foo bar example'];
+    $customers = Customer::search($filters)->get();
 ```

@@ -21,7 +21,9 @@ trait Searchable {
 
 				if (!empty($value) && array_key_exists($field, $this->searchable)) {
 
-					switch ($this->searchable[$field]) {
+                    $searchType = $this->searchable[$field];
+
+					switch ($searchType) {
 						// compare equals values
 						case 'MATCH':
 							$this->applyEqualsSearch($queryBuilder, $field, $value);
@@ -36,6 +38,10 @@ trait Searchable {
 						case 'BETWEEN':
 							$this->applyBetweenSearch($queryBuilder, $field, $value);
                             break;
+
+                        // call local scope function
+                        default:
+                            $this->callLocalScope($queryBuilder, $searchType, $value);
 					}
 				}
 			}
@@ -82,4 +88,13 @@ trait Searchable {
         $queryBuilder->where($field, $value);
     }
 
+    /**
+     * @param Builder $queryBuilder
+     * @param $scopeName
+     * @param $value
+     */
+    public function callLocalScope(Builder &$queryBuilder, $scopeName, $value)
+    {
+        $queryBuilder->{$scopeName}($value);
+    }
 }
