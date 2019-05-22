@@ -3,6 +3,13 @@
 /**
 * 
 */
+
+if (!function_exists('app')) {
+    function app($className) {
+        return new $className;
+    }
+}
+
 class StubClass {
 	public $searchable;
 	use Dlimars\LaravelSearchable\Searchable;
@@ -132,8 +139,9 @@ class TraitSearchableTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function getBuilderMock(){
-		return $this->getMock("\Illuminate\Database\Eloquent\Builder",[
-								'where'
-							]);
+		return $this->getMock(
+            '\Illuminate\Database\Eloquent\Builder',
+            ['where']
+        );
 	}
 }
