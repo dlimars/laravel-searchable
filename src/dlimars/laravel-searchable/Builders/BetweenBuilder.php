@@ -35,7 +35,7 @@ class BetweenBuilder implements BuilderContract
             $builder->where($clause->field, ">=", $clause->value[0]);
         }
 
-        if(isset($value[1]) && !empty($value[1])) {
+        if(isset($clause->value[1]) && !empty($clause->value[1])) {
             $builder->where($clause->field, "<=", $clause->value[1]);
         }
     }
