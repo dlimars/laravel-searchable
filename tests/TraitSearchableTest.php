@@ -139,8 +139,9 @@ class TraitSearchableTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function getBuilderMock(){
-        $mock = $this->getMockBuilder('\Illuminate\Database\Eloquent\Builder');
-        $mock->setMethods(['where']);
-        return $mock;
+		return $this->getMock(
+            '\Illuminate\Database\Eloquent\Builder',
+            ['where']
+        );
 	}
 }
