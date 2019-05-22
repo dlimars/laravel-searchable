@@ -1,6 +1,10 @@
 <?php
 
 namespace Dlimars\LaravelSearchable;
+
+
+use Dlimars\LaravelSearchable\Builders\BuilderContract;
+use Dlimars\LaravelSearchable\Builders\LocalScopeBuilder;
 use \Illuminate\Database\Eloquent\Builder;
 
 trait Searchable {
@@ -8,61 +12,27 @@ trait Searchable {
     /**
      * Apply filters in your QueryBuilder based in $fields
      *
-     * @param \Illuminate\Database\Eloquent\Builder $queryBuilder
+     * @param Builder $builder
      * @param array $fields
-     *
      * @return Builder
      */
-	public function scopeSearch(Builder $queryBuilder, $fields=[]){
-
+	public function scopeSearch(Builder $builder, $fields = [])
+    {
 		if (isset($this->searchable)) {
-
-			foreach ($fields as $field => $value) {
-
-				if (!empty($value) && array_key_exists($field, $this->searchable)) {
-
-                    $searchType = $this->searchable[$field];
-
-					switch ($searchType) {
-						// compare equals values
-						case 'MATCH':
-							$this->applyEqualsSearch($queryBuilder, $field, $value);
-							break;
-						
-						// compare like values
-						case 'LIKE':
-							$this->applyLikeSearch($queryBuilder, $field, $value);
-							break;
-
-						// compare between values
-						case 'BETWEEN':
-							$this->applyBetweenSearch($queryBuilder, $field, $value);
-                            break;
-
-                        // call local scope function
-                        default:
-                            $this->callLocalScope($queryBuilder, $searchType, $value);
-					}
-				}
-			}
+            $this->applySearch($builder, $fields);
 		}
-		return $queryBuilder;
+
+		return $builder;
 	}
 
     /**
-     * @param Builder $queryBuilder
-     * @param $field
-     * @param array $value
+     * @param Builder $builder
+     * @param array $fields
      */
-    public function applyBetweenSearch(Builder &$queryBuilder, $field, $value = [])
+    private function applySearch(Builder $builder, $fields = [])
     {
-        if (is_array($value) && count($value) == 2) {
-            if(isset($value[0]) && !empty($value[0])) {
-                $queryBuilder->where($field, ">=", $value[0]);
-            }
-            if(isset($value[1]) && !empty($value[1])) {
-                $queryBuilder->where($field, "<=", $value[1]);
-            }
+        foreach ($fields as $field => $value) {
+            $this->filterField($builder, $field, $value);
         }
     }
 
@@ -71,30 +41,84 @@ trait Searchable {
      * @param $field
      * @param $value
      */
-    public function applyLikeSearch(Builder &$queryBuilder, $field, $value)
+    private function filterField(Builder $queryBuilder, $field, $value)
     {
-        array_map(function($value) use ($queryBuilder, $field){
-            $queryBuilder->where($field, "LIKE", "%".$value."%");
-        }, explode(" ", $value));
+        if ($this->isValidField($field, $value)) {
+            $builder = $this->getBuilder($field);
+            $clause  = $this->getClause($field, $value);
+            $builder->filter($queryBuilder, $clause);
+        }
     }
 
     /**
-     * @param Builder $queryBuilder
      * @param $field
      * @param $value
+     * @return bool
      */
-    public function applyEqualsSearch(Builder &$queryBuilder, $field, $value)
+    private function isValidField($field, $value)
     {
-        $queryBuilder->where($field, $value);
+        return !empty($value) && array_key_exists($field, $this->searchable);
     }
 
     /**
-     * @param Builder $queryBuilder
-     * @param $scopeName
-     * @param $value
+     * @param $field
+     * @return BuilderContract
      */
-    public function callLocalScope(Builder &$queryBuilder, $scopeName, $value)
+    private function getBuilder($field)
     {
-        $queryBuilder->{$scopeName}($value);
+        $type = $this->getSearchType($field);
+
+        if ($this->scopeExists($type)) {
+            return app(LocalScopeBuilder::class);
+        }
+
+        return $this->makeBuilder($type);
+    }
+
+    /**
+     * @param $type
+     * @return BuilderContract
+     */
+    private function makeBuilder($type)
+    {
+        $className  = ucfirst(strtolower($type)) . "Builder";
+        $className  = __NAMESPACE__ . "\\Builders\\{$className}";
+        return app($className);
+    }
+
+    /**
+     * @param $field
+     * @param $value
+     * @return Clause
+     */
+    private function getClause($field, $value)
+    {
+        $type = $this->getSearchType($field);
+
+        if ($this->scopeExists($type)) {
+            return new Clause($type, $value);
+        }
+
+        return new Clause($field, $value);
+    }
+
+    /**
+     * @param $field
+     * @return mixed
+     */
+    private function getSearchType($field)
+    {
+        return $this->searchable[$field];
+    }
+
+    /**
+     * @param $scopeName
+     * @return bool
+     */
+    private function scopeExists($scopeName)
+    {
+        return method_exists(
+            $this, "scope" . ucfirst($scopeName)
+        );
     }
 }
